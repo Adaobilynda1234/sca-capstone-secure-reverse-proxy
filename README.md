@@ -194,6 +194,139 @@ docker compose logs proxy
 docker compose down
 ```
 
+# TASK 2
+## Reverse Proxy & TLS Implementation
+
+This project implements a secure internal portal using *Nginx as a reverse proxy with TLS termination*, ensuring that all client traffic is encrypted and routed through a single controlled entry point.
+
+###  Architecture Overview
+
+Client → HTTPS → Nginx (Reverse Proxy) → Backend (Flask App) → Database (MariaDB)
+
+* *Nginx* handles incoming requests and terminates TLS (HTTPS)
+* *Flask backend* serves application logic internally
+* *MariaDB* stores application data
+* Backend and database are isolated within Docker networks
+
+###  Reverse Proxy Configuration
+
+Nginx is configured to act as a reverse proxy, forwarding all incoming requests to the backend service:
+
+* All external traffic is routed through Nginx
+* Backend service is not directly exposed to the host
+* Internal communication occurs via Docker service networking (backend:8000)
+
+###  TLS (HTTPS) Setup
+
+HTTPS is enabled using a *self-signed SSL certificate* for local development and testing.
+
+#### Key Features:
+
+* TLS termination at the Nginx layer
+* Support for modern protocols: *TLSv1.2 and TLSv1.3*
+* Secure request handling between client and proxy
+
+#### Certificate Configuration:
+
+
+ssl_certificate:     /etc/nginx/certs/nginx.crt;
+ssl_certificate_key: /etc/nginx/certs/nginx.key;
+
+
+---
+
+### 🔄 HTTP to HTTPS Redirection
+
+All HTTP traffic is automatically redirected to HTTPS to enforce secure communication:
+
+
+HTTP (port 80) → 301 Redirect → HTTPS (port 443)
+
+
+This ensures that users cannot access the application over an insecure connection.
+
+---
+
+### 🛡️ Security Enhancements
+
+Additional security headers are configured in Nginx:
+
+* X-Frame-Options → Prevents clickjacking
+* X-Content-Type-Options → Prevents MIME sniffing
+* X-XSS-Protection → Enables browser XSS filtering
+
+---
+
+### 🧪 Verification & Testing
+
+The HTTPS setup was validated using the following methods:
+
+#### ✔ Browser Verification
+
+* Application accessible via: https://localhost
+* Browser displays secure connection (self-signed warning expected)
+
+#### ✔ HTTP Redirect Test
+
+bash
+curl -I http://localhost
+
+
+Expected:
+
+
+HTTP/1.1 301 Moved Permanently
+Location: https://localhost/
+
+
+#### ✔ HTTPS Response Test
+
+bash
+curl -k -I https://localhost
+
+
+Expected:
+
+
+HTTP/1.1 200 OK
+
+
+#### ✔ Nginx Logs
+
+Requests are successfully routed through Nginx, confirmed via container logs:
+
+bash
+docker-compose logs proxy
+
+
+#### ✔ Certificate Presence
+
+bash
+docker-compose exec proxy ls /etc/nginx/certs
+
+
+---
+
+### 🔒 Security Design Decisions
+
+* Backend service is *not exposed publicly* (no direct port mapping)
+* All access is controlled through Nginx
+* TLS is terminated at the proxy layer, mimicking real-world production architecture
+* Internal services communicate over isolated Docker networks
+
+---
+
+### ✅ Outcome
+
+This implementation ensures:
+
+* Secure HTTPS communication
+* Centralized traffic routing via reverse proxy
+* Proper service isolation
+* Production-aligned architecture design
+
+
+
 
 
 
@@ -203,3 +336,6 @@ docker compose down
 - [gh640/docker-compose-depends_on-nginx-certs-sample](https://github.com/gh640/docker-compose-depends_on-nginx-certs-sample)
 - [Prometheus Python Client](https://github.com/prometheus/client_python)
 - [Flask Documentation](https://flask.palletsprojects.com/)
+
+
+
