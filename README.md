@@ -234,20 +234,33 @@ ssl_certificate_key: /etc/nginx/certs/nginx.key;
 
 ###  New Project Structure
 
-project-root/
-│
-├── compose.yml
-│
+```
+.
 ├── backend/
-│
+│   ├── hello.py              # Flask app — Student Records Portal
+│   ├── requirements.txt      # Python dependencies
+│   └── Dockerfile            # App dockerfile
 ├── proxy/
-│   ├── Dockerfile
-│   ├── conf
-│   └── certs/
-│       ├── nginx.crt
-│       └── nginx.key
+│   ├── conf            # Nginx reverse proxy config
+│   ├── cert/
+          ├── nginx.cert          # Certificate
+          ├── nginx.key            # Key
+│   └── Dockerfile/                # dockerfile for Nginx
+├── docker-compose.yml   #docker compose
+├── db        #database folder
+|    ├── password.txt        
+├── screenshots/              # Evidence screenshots
+│   ├── app-home.png
+│   ├── health-endpoint.png
+│   ├── metrics-endpoint.png
+│   ├── app-before.png
+│   
+└── README.md
+```
 
 
+
+---
 ###  HTTP to HTTPS Redirection
 
 All HTTP traffic is automatically redirected to HTTPS to enforce secure communication:
