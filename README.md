@@ -232,22 +232,32 @@ HTTPS is enabled using a *self-signed SSL certificate* for local development and
 ssl_certificate:     /etc/nginx/certs/nginx.crt;
 ssl_certificate_key: /etc/nginx/certs/nginx.key;
 
+###  New Project Structure
 
----
+project-root/
+│
+├── compose.yml
+│
+├── backend/
+│
+├── proxy/
+│   ├── Dockerfile
+│   ├── conf
+│   └── certs/
+│       ├── nginx.crt
+│       └── nginx.key
 
-### 🔄 HTTP to HTTPS Redirection
+
+###  HTTP to HTTPS Redirection
 
 All HTTP traffic is automatically redirected to HTTPS to enforce secure communication:
 
-
 HTTP (port 80) → 301 Redirect → HTTPS (port 443)
-
 
 This ensures that users cannot access the application over an insecure connection.
 
----
 
-### 🛡️ Security Enhancements
+###  Security Enhancements
 
 Additional security headers are configured in Nginx:
 
@@ -255,7 +265,7 @@ Additional security headers are configured in Nginx:
 * X-Content-Type-Options → Prevents MIME sniffing
 * X-XSS-Protection → Enables browser XSS filtering
 
----
+
 
 ### 🧪 Verification & Testing
 
@@ -305,18 +315,16 @@ bash
 docker-compose exec proxy ls /etc/nginx/certs
 
 
----
 
-### 🔒 Security Design Decisions
+###  Security Design Decisions
 
 * Backend service is *not exposed publicly* (no direct port mapping)
 * All access is controlled through Nginx
 * TLS is terminated at the proxy layer, mimicking real-world production architecture
 * Internal services communicate over isolated Docker networks
 
----
 
-### ✅ Outcome
+###  Outcome
 
 This implementation ensures:
 
