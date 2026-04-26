@@ -194,6 +194,8 @@ docker compose logs proxy
 docker compose down
 ```
 
+---
+
 # TASK 2
 ## Reverse Proxy & TLS Implementation
 
@@ -280,7 +282,7 @@ Additional security headers are configured in Nginx:
 
 
 
-### 🧪 Verification & Testing
+###  Verification & Testing
 
 The HTTPS setup was validated using the following methods:
 
@@ -288,6 +290,8 @@ The HTTPS setup was validated using the following methods:
 
 * Application accessible via: https://localhost
 * Browser displays secure connection (self-signed warning expected)
+
+![](screenshots/sca_capstone_TSL.png)
 
 #### ✔ HTTP Redirect Test
 
@@ -297,22 +301,19 @@ curl -I http://localhost
 
 Expected:
 
-
 HTTP/1.1 301 Moved Permanently
 Location: https://localhost/
-
+![](screenshots/reverse_terminal1.png)
 
 #### ✔ HTTPS Response Test
 
 bash
 curl -k -I https://localhost
 
-
 Expected:
 
-
 HTTP/1.1 200 OK
-
+![](screenshots/reverse_terminal2.png)
 
 #### ✔ Nginx Logs
 
@@ -321,12 +322,13 @@ Requests are successfully routed through Nginx, confirmed via container logs:
 bash
 docker-compose logs proxy
 
+![](screenshots/log.png)
+
 
 #### ✔ Certificate Presence
 
 bash
 docker-compose exec proxy ls /etc/nginx/certs
-
 
 
 ###  Security Design Decisions
