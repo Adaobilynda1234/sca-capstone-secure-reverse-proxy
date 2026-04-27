@@ -2,11 +2,20 @@ import os
 from flask import Flask, jsonify
 import mysql.connector
 from prometheus_client import Counter, generate_latest
+from prometheus_flask_exporter import PrometheusMetrics
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+
 # Prometheus metric
-REQUEST_COUNT = Counter('request_count', 'Total HTTP Requests')
+metrics = PrometheusMetrics(app)
+metrics.info('app_info', 'Student Records Portal', version='1.0.0')
 
 # -------------------------
 # Database Manager Class
@@ -68,12 +77,11 @@ def get_db():
 
 @app.route('/')
 def home():
-    REQUEST_COUNT.inc()
-
+    logger.info("GET / - serving student records")
     db = get_db()
     db.init_db()
     students = db.get_students()
-
+    logger.info(f"Fetched {len(students)} students from DB")
     html = """
     <html>
     <head>
@@ -103,12 +111,13 @@ def home():
 
 @app.route('/health')
 def health():
+    logger.info("GET /health - OK")
     return jsonify({"status": "ok"}), 200
 
 
 @app.route('/metrics')
 def metrics():
-    return generate_latest(), 200, {'Content-Type': 'text/plain'}
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
 
 # -------------------------

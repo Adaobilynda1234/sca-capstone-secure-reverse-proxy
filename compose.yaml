@@ -51,8 +51,56 @@ services:
     networks:
       - frontnet
 
+    # ── Monitoring ──────────────────────────────────────────────
+ 
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    command:
+      - -nginx.scrape-uri=http://proxy:8080/stub_status
+    restart: always
+    expose:
+      - "9113"
+    networks:
+      - frontnet
+      - monnet
+    depends_on:
+      - proxy
+ 
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monnet
+      - frontnet        # needs to reach backend for flask metrics
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+ 
+  grafana:
+    image: grafana/grafana:10.3.0
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monnet
+    depends_on:
+      - prometheus
+
 volumes:
   db-data:
+  prometheus-data:
+  grafana-data:
 
 secrets:
   db-password:
@@ -61,3 +109,4 @@ secrets:
 networks:
   backnet:
   frontnet:
+  monnet:
