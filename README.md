@@ -349,7 +349,184 @@ This implementation ensures:
 * Production-aligned architecture design
 
 
+# Task 4 — Logging & Monitoring
 
+## Overview
+
+This task adds logging and monitoring to the Student Records Portal, a Flask application served behind an Nginx reverse proxy with HTTPS. The monitoring stack captures Nginx access logs, Flask application logs, health check endpoints, and Prometheus metrics visualised in Grafana.
+
+---
+
+## Monitoring Stack
+
+| Tool | Role |
+|------|------|
+| **Prometheus** | Scrapes and stores metrics from Flask and Nginx |
+| **Grafana** | Visualises Prometheus metrics in dashboards |
+| **nginx-prometheus-exporter** | Exposes Nginx connection metrics to Prometheus |
+| **prometheus-flask-exporter** | Exposes per-route Flask metrics at `/metrics` |
+
+---
+
+## What Was Added
+
+### 1. Flask App (`backend/hello.py`)
+- Added Python `logging` module with timestamped `[INFO]` log output
+- Integrated `prometheus_flask_exporter` to auto-track request counts and latency per route
+- Added `/health` endpoint returning `{"status": "ok", "service": "student-portal"}`
+- Added `/metrics` endpoint exposing Prometheus metrics
+
+### 2. Nginx Config (`proxy/conf`)
+- Added JSON-structured access logging format (`json_combined`) capturing:
+  - Timestamp, remote IP, HTTP method, URI, status code, bytes sent, response time
+- Added internal `stub_status` server on port `8080` for the nginx-prometheus-exporter
+- Added `/metrics` proxy location to expose Flask metrics through Nginx
+
+### 3. Docker Compose (`compose.yaml`)
+Added three new services:
+
+- **`prometheus`** — scrapes Flask and Nginx metrics every 15 seconds
+- **`grafana`** — visualises metrics on port `3000`
+- **`nginx-exporter`** — scrapes Nginx `stub_status` and exposes to Prometheus
+
+### 4. Monitoring Config (`monitoring/`)
+- `monitoring/prometheus.yml` — defines scrape targets for Flask and Nginx
+- `monitoring/grafana/provisioning/datasources/prometheus.yml` — auto-connects Grafana to Prometheus on startup
+
+---
+
+## Project Structure
+
+```
+.
+├── backend/
+│   ├── Dockerfile
+│   ├── hello.py               # Flask app with logging + metrics
+│   └── requirements.txt
+├── proxy/
+│   ├── Dockerfile
+│   ├── conf                   # Nginx config with JSON logs + stub_status
+│   └── certs/                 # Self-signed TLS certificate
+├── monitoring/
+│   ├── prometheus.yml         # Prometheus scrape config
+│   └── grafana/
+│       └── provisioning/
+│           └── datasources/
+│               └── prometheus.yml  # Grafana datasource config
+├── db/
+│   └── password.txt
+└── compose.yaml
+```
+
+---
+
+## How to Run
+
+```bash
+docker compose down
+docker compose up --build
+```
+
+---
+
+## Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `https://localhost` | Student Records Portal |
+| `https://localhost/health` | Health check |
+| `https://localhost/metrics` | Prometheus metrics |
+| `http://localhost:9090` | Prometheus UI |
+| `http://localhost:9090/targets` | Prometheus scrape targets |
+| `http://localhost:3000` | Grafana (admin / admin) |
+
+---
+
+## Evidence
+
+### Nginx Access Logs
+Nginx logs every request in JSON format, captured via `docker compose logs proxy`:
+
+```json
+{"time":"2026-04-25T16:27:42+00:00","remote_addr":"192.168.32.1","method":"GET","uri":"/","status":200,"bytes_sent":1125,"request_time":0.101}
+{"time":"2026-04-25T16:27:46+00:00","remote_addr":"192.168.32.1","method":"GET","uri":"/health","status":200,"bytes_sent":53,"request_time":0.003}
+{"time":"2026-04-25T16:28:07+00:00","remote_addr":"192.168.32.1","method":"GET","uri":"/metrics","status":200,"bytes_sent":8165,"request_time":0.011}
+```
+
+### Flask App Logs
+Flask logs every request and DB operation, captured via `docker compose logs backend`:
+
+```
+2026-04-25 16:27:42,279 [INFO] GET / - serving student records
+2026-04-25 16:27:42,377 [INFO] Fetched 4 students from DB
+2026-04-25 16:27:46,154 [INFO] GET /health - OK
+```
+
+### Health Check
+```bash
+curl -k https://localhost/health
+```
+```json
+{"status": "ok", "service": "student-portal"}
+```
+
+### Metrics Endpoint
+```bash
+curl -k https://localhost/metrics
+```
+Key metrics exposed:
+```
+flask_http_request_total{method="GET",status="200"} 5.0
+flask_http_request_duration_seconds{path="/",status="200"}
+flask_http_request_duration_seconds{path="/health",status="200"}
+app_info{version="1.0.0"} 1.0
+```
+
+### Prometheus Targets
+Both scrape targets show **UP** at `http://localhost:9090/targets`:
+- `flask-app` — scraping Flask `/metrics` every 15s
+- `nginx` — scraping Nginx via nginx-exporter every 15s
+
+### Useful Prometheus Queries
+Run these in the Prometheus UI at `http://localhost:9090`:
+
+```
+flask_http_request_total
+flask_http_request_duration_seconds_sum
+nginx_connections_active
+```
+
+---
+
+## Key Decisions
+
+- **JSON access logs** were chosen over default Nginx logs because they are structured, easy to parse, and can be fed into log aggregation tools like Loki or CloudWatch in a production environment.
+- **prometheus-flask-exporter** was used instead of manually tracking metrics with `prometheus_client` counters because it automatically instruments all routes with request counts and latency histograms.
+- **stub_status** is exposed on an internal port (`8080`) only — not published to the host — so it is only accessible within the Docker network.
+
+
+### Screenshots
+
+#### Health Endpoint
+![Health](screenshots/health-endpoint.png)
+
+#### Metrics Endpoint
+![Metrics](screenshots/metrics-endpoint.png)
+
+#### Nginx Access Logs
+![Nginx Logs](screenshots/nginx-access-logs.png)
+
+#### Flask App Logs
+![Flask Logs](screenshots/flask-app-logs.png)
+
+#### Prometheus Targets
+![Prometheus Targets](screenshots/prometheus-targets.png)
+
+#### Prometheus Query
+![Prometheus Query](screenshots/prometheus-query.png)
+
+#### Grafana Dashboard
+![Grafana](screenshots/grafana-metrics.png)
 
 
 
