@@ -16,6 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Fix line endings in Dockerfile
+        run: sed -i 's/\r//' backend/Dockerfile
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
