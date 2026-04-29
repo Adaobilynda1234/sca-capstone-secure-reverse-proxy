@@ -538,4 +538,25 @@ nginx_connections_active
 - [Flask Documentation](https://flask.palletsprojects.com/)
 
 
+## Task 5 — CI/CD Pipeline
+
+### Overview
+This task implements a CI/CD pipeline using GitHub Actions that automatically builds the Docker image and pushes it to Docker Hub on every push to `dev-branch`.
+
+### What Was Added
+- `.github/workflows/docker-build-push.yml` — GitHub Actions workflow file
+
+### How It Works
+1. Code is pushed to `dev-branch`
+2. GitHub Actions triggers automatically
+3. Builds the Docker image from `backend/Dockerfile`
+4. Pushes the image to Docker Hub
+
+### Docker Hub Image
+🔗 **Image Link:** https://hub.docker.com/r/kehindemasuud/sca-capstone-app
+
+![Docker Hub Image](screenshots/dockerhub-image.png)
+
+### Evidence
+![GitHub Actions Workflow](screenshots/cicd-workflow.png)
 
