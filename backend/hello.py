@@ -1,7 +1,8 @@
 import os
+import logging
 from flask import Flask, jsonify
 import mysql.connector
-from prometheus_client import Counter, generate_latest
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from prometheus_flask_exporter import PrometheusMetrics
 
 logging.basicConfig(
