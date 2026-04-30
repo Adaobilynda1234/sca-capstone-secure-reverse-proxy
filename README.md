@@ -560,3 +560,60 @@ This task implements a CI/CD pipeline using GitHub Actions that automatically bu
 ### Evidence
 ![GitHub Actions Workflow](screenshots/cicd-workflow.png)
 
+## Task 6 - Kubernetes
+### Overview
+Deployed app using:
+- Pods / Deployments
+- Services
+- Ingress 
+
+### Screenshot
+**Create a minikube cluster**
+
+`minikube start --driver=docker`
+<img src="./screenshots/minikube-start.png">
+
+**Check the minikube status**
+
+`minikube status`
+<img src="./screenshots/minikube-status.png">
+
+**Open the Dashboard**
+
+`minikube dashboard --url`
+<img src="./screenshots/minikube-dashboard.png">
+
+### Create a Deployment
+- **Use the kubectl create command to create a Deployment that manages a Pod.**
+
+`kubectl create deployment secure-reverse-proxy --image=registry.k8s.io/e2e-test-images/agnhost:2.53 -- /agnhost netexec --http-port=8080
+deployment.apps/secure-reverse-proxy created`
+
+- **View the Deployment**
+
+`kubectl get deployments`
+
+- **View the Pod**
+
+`kubectl get pods`
+<img src="./screenshots/k8s-get-pod.png">
+
+- **View cluster events**
+
+`kubectl get events`
+
+<img src="./screenshots/k8s-log.png">
+
+- **minikube addons list**
+<img src="./screenshots/minikube-list.png">
+
+<img src="./screenshots/k8s-health.png">
+
+**Get Ingress**
+
+`kubectl get ingress`
+<img src="./screenshots/k8s-get-ingress.png">
+
+
+
+
