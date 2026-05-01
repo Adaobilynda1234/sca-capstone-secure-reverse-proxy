@@ -3,7 +3,9 @@
 ## Project Goal:
 We are building a secure internal web application (student/admin portal) using Docker, Nginx, HTTPS, CI/CD, and Kubernetes. It will run locally but be designed like a real production system.
 
-1. Application (Frontend + Backend + DB)
+1. AWS Architecture (Design Only)
+
+2. Application (Frontend + Backend + DB)
 
 - Frontend: HTML/CSS (or React if we want)
 - Backend: Flask
@@ -11,14 +13,14 @@ We are building a secure internal web application (student/admin portal) using D
 - Features:admin dashboard or student Portal.
 - Add /health endpoint
 
-2. Nginx Reverse Proxy + TLS
+3. Nginx Reverse Proxy + TLS
 
 - Configure Nginx as reverse proxy
 - Route traffic to app container
 - Enable HTTPS using self-signed certificate
 -  SSL/TLS 
 
-3. Docker Setup
+4. Docker Setup
 
 - Write Dockerfile for app
 - Create Docker Compose to connect:
@@ -27,7 +29,7 @@ We are building a secure internal web application (student/admin portal) using D
   - mysql
 - Ensure containers communicate properly
 
-4. Logging & Monitoring
+5. Logging & Monitoring
 
 - Capture:
   - Nginx access logs
@@ -35,70 +37,19 @@ We are building a secure internal web application (student/admin portal) using D
 - Show evidence (screenshots/log output)
 - Add basic metrics or health checks.
 
-5. CI/CD Pipeline
+6. CI/CD Pipeline
 
 - Use GitHub Actions
 - Build Docker image
 - Push image to Docker Hub (or GHCR)
 
-6. Kubernetes (Minikube)
+7. Kubernetes (Minikube)
 
 - Deploy app using:
   - Pods / Deployments
   - Services
   - Ingress (acts like Nginx in K8s)
 
-7. AWS Architecture (Design Only)# Capstone Project
-
-## Project Goal:
-We are building a secure internal web application (student/admin portal) using Docker, Nginx, HTTPS, CI/CD, and Kubernetes. It will run locally but be designed like a real production system.
-
-1. Application (Frontend + Backend + DB)
-
-- Frontend: HTML/CSS (or React if we want)
-- Backend: Flask
-- Database: MySQL
-- Features:admin dashboard or student Portal.
-- Add /health endpoint
-
-2. Nginx Reverse Proxy + TLS
-
-- Configure Nginx as reverse proxy
-- Route traffic to app container
-- Enable HTTPS using self-signed certificate
--  SSL/TLS 
-
-3. Docker Setup
-
-- Write Dockerfile for app
-- Create Docker Compose to connect:
-  - nginx
-  - app
-  - mysql
-- Ensure containers communicate properly
-
-4. Logging & Monitoring
-
-- Capture:
-  - Nginx access logs
-  - App logs
-- Show evidence (screenshots/log output)
-- Add basic metrics or health checks.
-
-5. CI/CD Pipeline
-
-- Use GitHub Actions
-- Build Docker image
-- Push image to Docker Hub (or GHCR)
-
-6. Kubernetes (Minikube)
-
-- Deploy app using:
-  - Pods / Deployments
-  - Services
-  - Ingress (acts like Nginx in K8s)
-
-7. AWS Architecture (Design Only)
 
 
 
