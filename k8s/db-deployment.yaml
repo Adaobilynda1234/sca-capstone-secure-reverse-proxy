@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:10-focal
+          args: ["--default-authentication-plugin=mysql_native_password"]
+          env:
+            - name: MYSQL_DATABASE
+              value: example
+            - name: MYSQL_ROOT_PASSWORD_FILE
+              value: /run/secrets/db-password
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: db-password
+              mountPath: /run/secrets/db-password
+              subPath: db-password
+              readOnly: true
+            - name: db-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: db-password
+          secret:
+            secretName: db-password
+            items:
+              - key: db-password
+                path: db-password
+        - name: db-data
+          emptyDir: {}
