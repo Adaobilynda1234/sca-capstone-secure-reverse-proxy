@@ -127,8 +127,31 @@ The project is based on the [`docker/awesome-compose` nginx-flask-mysql sample](
 | Cloud Design | AWS (EC2 · ALB · S3 · IAM · Security Groups) |
 
 ---
+## Task One: # Architecture
 
-## What I Modified
+![AWS Design Architecture: Nginx Reverse Proxy Diagram](./AWS-Architecture/aws-architecture.drawio.svg)
+
+## Architecture Overview
+
+This project uses a secure AWS architecture with a reverse proxy and layered TLS encryption.
+
+### Key Components
+
+- Application Load Balancer (ALB)
+- NGINX Reverse Proxy
+- Kubernetes (Minikube)
+- Amazon RDS (MySQL)
+- Private VPC with public and private subnets
+
+### Traffic Flow
+
+User → ALB (TLS) → NGINX (TLS) → Frontend/Backend → RDS
+
+🔎 **Detailed Architecture Explanation:**  
+See [ARCHITECTURE.md](./AWS-Architecture/ARCHITECTURE.md)
+
+
+## Task 2: What Was Modified
 
 ### Before — Original Sample App
 
@@ -246,7 +269,7 @@ docker compose down
 
 ---
 
-# TASK 2
+# TASK 3
 ## Reverse Proxy & TLS Implementation
 
 This project implements a secure internal portal using *Nginx as a reverse proxy with TLS termination*, ensuring that all client traffic is encrypted and routed through a single controlled entry point.
