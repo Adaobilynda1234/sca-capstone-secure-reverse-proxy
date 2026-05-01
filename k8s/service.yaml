@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: secure-reverse-proxy
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: secure-reverse-proxy
   ports:

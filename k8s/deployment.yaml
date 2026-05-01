@@ -17,3 +17,15 @@ spec:
           image: kehindemasuud/sca-capstone-app:latest
           ports:
             - containerPort: 8000
+          volumeMounts:
+            - name: db-password
+              mountPath: /run/secrets/db-password
+              subPath: db-password
+              readOnly: true
+      volumes:
+        - name: db-password
+          secret:
+            secretName: db-password
+            items:
+              - key: db-password
+                path: db-password

@@ -4,8 +4,13 @@ metadata:
   name: secure-reverse-proxy
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - secure-proxy.local
+      secretName: secure-proxy-tls
   rules:
     - host: secure-proxy.local
       http:
