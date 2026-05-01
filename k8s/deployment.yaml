@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-reverse-proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: secure-reverse-proxy
+  template:
+    metadata:
+      labels:
+        app: secure-reverse-proxy
+    spec:
+      containers:
+        - name: app
+          image: kehindemasuud/sca-capstone-app:latest
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: db-password
+              mountPath: /run/secrets/db-password
+              subPath: db-password
+              readOnly: true
+      volumes:
+        - name: db-password
+          secret:
+            secretName: db-password
+            items:
+              - key: db-password
+                path: db-password

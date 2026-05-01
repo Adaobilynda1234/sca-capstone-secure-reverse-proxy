@@ -1,0 +1,61 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (keep image small)
+README.md
+*.md
+docs/
+
+# CI/CD
+.github/
+
+# Kubernetes manifests (not needed in image)
+k8s/
+
+# Monitoring configs (used by compose, not by image build)
+monitoring/
+
+# AWS design docs
+aws/
+
+# Screenshots
+screenshots/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.pytest_cache/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs and build artifacts
+*.log
+logs/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Docker
+Dockerfile.dev
+docker-compose*.yml
+compose*.yaml
+.dockerignore
+
+# Node
+node_modules/

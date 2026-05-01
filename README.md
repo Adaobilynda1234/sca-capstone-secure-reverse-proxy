@@ -530,12 +530,6 @@ nginx_connections_active
 
 
 
-## References
-
-- [docker/awesome-compose nginx-flask-mysql](https://github.com/docker/awesome-compose/tree/master/nginx-flask-mysql)
-- [gh640/docker-compose-depends_on-nginx-certs-sample](https://github.com/gh640/docker-compose-depends_on-nginx-certs-sample)
-- [Prometheus Python Client](https://github.com/prometheus/client_python)
-- [Flask Documentation](https://flask.palletsprojects.com/)
 
 
 ## Task 5 — CI/CD Pipeline
@@ -560,3 +554,300 @@ This task implements a CI/CD pipeline using GitHub Actions that automatically bu
 ### Evidence
 ![GitHub Actions Workflow](screenshots/cicd-workflow.png)
 
+# Task 6 — Kubernetes Deployment (Minikube)
+
+## Overview
+
+The Student Records Portal is deployed to a local Kubernetes cluster (Minikube) using:
+
+- **Secret** — database password, base64-encoded
+- **Deployments** — MariaDB (1 replica) and Flask app (2 replicas)
+- **Services** — ClusterIP for MariaDB, NodePort for the app
+- **Ingress** — nginx-ingress controller with TLS termination using the project's existing self-signed certificate
+
+The `proxy/` Nginx container from the Compose stack is **not** deployed in Kubernetes. Its role (TLS termination + reverse proxy) is performed by the nginx-ingress controller, which uses the same self-signed certificate from `proxy/certs/`.
+
+---
+
+## Architecture
+
+```
+                         ┌─────────────────────┐
+                         │   Browser / curl    │
+                         │ https://secure-...  │
+                         └──────────┬──────────┘
+                                    │ TLS
+                         ┌──────────▼──────────┐
+                         │  nginx-ingress      │
+                         │  (TLS termination)  │
+                         └──────────┬──────────┘
+                                    │ HTTP
+                         ┌──────────▼──────────┐
+                         │ secure-reverse-proxy│
+                         │   Service (NodePort)│
+                         └──────────┬──────────┘
+                                    │
+                       ┌────────────┴────────────┐
+                       │                         │
+              ┌────────▼────────┐       ┌────────▼────────┐
+              │  Flask Pod 1    │       │  Flask Pod 2    │
+              └────────┬────────┘       └────────┬────────┘
+                       │                         │
+                       └────────────┬────────────┘
+                                    │ TCP 3306
+                         ┌──────────▼──────────┐
+                         │   db Service        │
+                         │   (ClusterIP)       │
+                         └──────────┬──────────┘
+                                    │
+                         ┌──────────▼──────────┐
+                         │   MariaDB Pod       │
+                         └─────────────────────┘
+```
+
+---
+
+## Prerequisites
+
+- Docker
+- Minikube
+- kubectl
+- Existing TLS cert and key in `proxy/certs/` (`nginx.crt`, `nginx.key`)
+- Existing DB password in `db/password.txt`
+
+---
+
+## Manifest Files
+
+All manifests are in the `k8s/` directory:
+
+| File | Purpose |
+|---|---|
+| `db-secret.yaml` | Base64-encoded database password |
+| `db-deployment.yaml` | MariaDB deployment, mounts the secret at `/run/secrets/db-password` |
+| `db-service.yaml` | ClusterIP service exposing port 3306 |
+| `deployment.yaml` | Flask app deployment, 2 replicas, mounts the same secret |
+| `service.yaml` | NodePort service exposing port 80 → containerPort 8000 |
+| `ingress.yaml` | Ingress with TLS, host `secure-proxy.local`, HTTP→HTTPS redirect |
+
+---
+
+## Deployment Steps
+
+### 1. Start Minikube
+
+```bash
+minikube start --driver=docker
+minikube status
+```
+
+![minikube start](./screenshots/minikube-start.png)
+![minikube status](./screenshots/minikube-status.png)
+
+### 2. Enable the Ingress Addon
+
+```bash
+minikube addons enable ingress
+kubectl get pods -n ingress-nginx
+```
+
+Wait for the `ingress-nginx-controller-*` pod to show `1/1 Running`.
+
+![addons list](./screenshots/minikube-list.png)
+
+### 3. Generate the DB Secret
+
+The base64-encoded password in `db-secret.yaml` is generated from `db/password.txt`:
+
+```bash
+echo -n "$(cat db/password.txt)" | base64
+```
+
+The result is pasted into the `data.db-password` field of `k8s/db-secret.yaml`.
+
+### 4. Create the TLS Secret
+
+The same self-signed certificate used by the Compose `proxy/` container is reused as a Kubernetes TLS secret:
+
+```bash
+kubectl create secret tls secure-proxy-tls \
+  --cert=proxy/certs/nginx.crt \
+  --key=proxy/certs/nginx.key
+```
+![create proxy](./screenshots/k8s-secure-proxy.png)
+
+### 5. Apply Manifests
+
+```bash
+kubectl apply -f k8s/db-secret.yaml
+kubectl apply -f k8s/db-deployment.yaml
+kubectl apply -f k8s/db-service.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/ingress.yaml
+```
+
+![get apply](./screenshots/k8s-apply.png)
+### 6. Verify Pods, Services, and Ingress
+
+```bash
+kubectl get pods
+kubectl get svc
+kubectl get ingress
+```
+
+All three pods (1 db + 2 app replicas) should show `1/1 Running`. The ingress should show the Minikube IP in the ADDRESS column and `80, 443` in the PORTS column.
+
+![get pods](./screenshots/k8s-get-pod.png)
+
+![get svc](./screenshots/k8s-get-svc.png)
+
+![get ingress](./screenshots/k8s-get-ingress.png)
+
+### 7. Configure DNS
+
+Add an entry to your hosts file so `secure-proxy.local` resolves locally.
+
+**Linux / macOS / WSL:**
+```bash
+echo "$(minikube ip) secure-proxy.local" | sudo tee -a /etc/hosts
+```
+
+![get host](./screenshots/k8-host.png)
+
+**Windows** (for browser access from Windows when running Minikube in WSL2):
+Edit `C:\Windows\System32\drivers\etc\hosts` (as administrator) and add:
+```
+127.0.0.1 secure-proxy.local
+```
+
+### 8. (WSL2 only) Start Minikube Tunnel
+
+When using the docker driver on WSL2, Minikube IP routing requires a tunnel. In a separate terminal:
+
+```bash
+minikube tunnel
+```
+
+Leave this terminal running.
+
+---
+
+## Verification
+
+### HTTPS Health Check via Ingress
+
+```bash
+curl -k https://secure-proxy.local/health
+```
+```json
+{"status": "ok"}
+```
+
+![health check](./screenshots/k8s-health.png)
+
+### HTTP → HTTPS Redirect
+
+```bash
+curl -I http://secure-proxy.local/
+```
+Returns `308 Permanent Redirect` to HTTPS.
+
+### Application via Browser
+
+```bash
+minikube service secure-reverse-proxy
+```
+
+Or open `https://secure-proxy.local` directly in the browser (click through the self-signed cert warning).
+
+![app in browser](./screenshots/k8s-app-browser.png)
+
+### Application Logs
+
+```bash
+kubectl logs -l app=secure-reverse-proxy --tail=20
+```
+
+
+
+![app logs](./screenshots/k8s-app-logs.png)
+
+### Cluster Events
+
+```bash
+kubectl get events --sort-by='.lastTimestamp' | tail -20
+```
+
+![events](./screenshots/k8s-events.png)
+
+---
+
+## Monitoring
+
+The full Prometheus + Grafana monitoring stack was implemented in **Task 4 — Logging & Monitoring** as part of the Docker Compose deployment. See `Task4.md` for the complete setup, scrape configs, and dashboards.
+
+In the Kubernetes deployment, the application's `/metrics` endpoint remains exposed via the ingress and is ready to be scraped by an in-cluster Prometheus:
+
+```bash
+curl -k https://secure-proxy.local/metrics | head -20
+```
+
+Porting the full monitoring stack to Kubernetes (using ServiceMonitor CRDs or the kube-prometheus-stack Helm chart) is out of scope for this task.
+
+![metrics endpoint](./screenshots/k8s-metrics.png)
+
+---
+
+## Key Decisions
+
+- **No `proxy/` container in Kubernetes.** The nginx-ingress controller takes over TLS termination and reverse proxying. The same self-signed cert from `proxy/certs/` is reused as a Kubernetes TLS secret, so the certificate identity is consistent across both deployment modes.
+- **Secret mount with `subPath`.** The DB password is mounted at `/run/secrets/db-password` using `subPath` rather than as a directory mount. This avoids the conflict with Kubernetes' service account token, which is also injected under `/var/run/secrets`.
+- **NodePort service for the app.** ClusterIP would not be reachable via `minikube service` for browser access. NodePort allows both ingress-routed traffic (the production path) and direct service access for screenshots and debugging.
+- **Same DB password file as Compose.** The base64 in the secret is generated from `db/password.txt`, so credentials stay consistent between Compose and Kubernetes deployments.
+
+---
+
+## Cleanup
+
+```bash
+kubectl delete -f k8s/
+kubectl delete secret secure-proxy-tls
+minikube stop
+minikube delete
+```
+![clean up](./screenshots/k8s-clean-up.png)
+
+To remove the hosts entry:
+```bash
+sudo sed -i '/secure-proxy.local/d' /etc/hosts
+```
+
+---
+
+## Screenshots
+
+All screenshots are in the `screenshots/` directory.
+
+| File | Shows |
+|---|---|
+| `minikube-start.png` | `minikube start` output |
+| `minikube-status.png` | `minikube status` confirming cluster is running |
+| `minikube-dashboard.png` | Minikube dashboard |
+| `minikube-list.png` | Available addons including ingress |
+| `k8s-get-pod.png` | All three pods (1 db + 2 app) Running |
+| `k8s-get-svc.png` | Services: db (ClusterIP), secure-reverse-proxy (NodePort) |
+| `k8s-get-ingress.png` | Ingress with populated ADDRESS and PORTS 80, 443 |
+| `k8s-health.png` | `curl -k https://secure-proxy.local/health` returning `{"status":"ok"}` |
+| `k8s-app-browser.png` | Student Records Portal rendered in the browser |
+| `k8s-app-logs.png` | Flask request logs from `kubectl logs` |
+| `k8s-metrics.png` | Prometheus metrics exposed via ingress |
+| `k8s-events.png` | `kubectl get events` |
+
+
+# References
+
+- [docker/awesome-compose nginx-flask-mysql](https://github.com/docker/awesome-compose/tree/master/nginx-flask-mysql)
+- [gh640/docker-compose-depends_on-nginx-certs-sample](https://github.com/gh640/docker-compose-depends_on-nginx-certs-sample)
+- [Prometheus Python Client](https://github.com/prometheus/client_python)
+- [Flask Documentation](https://flask.palletsprojects.com/)
