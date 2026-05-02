@@ -3,7 +3,9 @@
 ## Project Goal:
 We are building a secure internal web application (student/admin portal) using Docker, Nginx, HTTPS, CI/CD, and Kubernetes. It will run locally but be designed like a real production system.
 
-1. Application (Frontend + Backend + DB)
+1. AWS Architecture (Design Only)
+
+2. Application (Frontend + Backend + DB)
 
 - Frontend: HTML/CSS (or React if we want)
 - Backend: Flask
@@ -11,14 +13,14 @@ We are building a secure internal web application (student/admin portal) using D
 - Features:admin dashboard or student Portal.
 - Add /health endpoint
 
-2. Nginx Reverse Proxy + TLS
+3. Nginx Reverse Proxy + TLS
 
 - Configure Nginx as reverse proxy
 - Route traffic to app container
 - Enable HTTPS using self-signed certificate
 -  SSL/TLS 
 
-3. Docker Setup
+4. Docker Setup
 
 - Write Dockerfile for app
 - Create Docker Compose to connect:
@@ -27,7 +29,7 @@ We are building a secure internal web application (student/admin portal) using D
   - mysql
 - Ensure containers communicate properly
 
-4. Logging & Monitoring
+5. Logging & Monitoring
 
 - Capture:
   - Nginx access logs
@@ -35,20 +37,19 @@ We are building a secure internal web application (student/admin portal) using D
 - Show evidence (screenshots/log output)
 - Add basic metrics or health checks.
 
-5. CI/CD Pipeline
+6. CI/CD Pipeline
 
 - Use GitHub Actions
 - Build Docker image
 - Push image to Docker Hub (or GHCR)
 
-6. Kubernetes (Minikube)
+7. Kubernetes (Minikube)
 
 - Deploy app using:
   - Pods / Deployments
   - Services
   - Ingress (acts like Nginx in K8s)
 
-7. AWS Architecture (Design Only)
 
 
 
@@ -77,8 +78,31 @@ The project is based on the [`docker/awesome-compose` nginx-flask-mysql sample](
 | Cloud Design | AWS (EC2 · ALB · S3 · IAM · Security Groups) |
 
 ---
+## Task One: # Architecture
 
-## What I Modified
+![AWS Design Architecture: Nginx Reverse Proxy Diagram](./AWS-Architecture/aws-architecture.drawio.svg)
+
+## Architecture Overview
+
+This project uses a secure AWS architecture with a reverse proxy and layered TLS encryption.
+
+### Key Components
+
+- Application Load Balancer (ALB)
+- NGINX Reverse Proxy
+- Kubernetes (Minikube)
+- Amazon RDS (MySQL)
+- Private VPC with public and private subnets
+
+### Traffic Flow
+
+User → ALB (TLS) → NGINX (TLS) → Frontend/Backend → RDS
+
+🔎 **Detailed Architecture Explanation:**  
+See [ARCHITECTURE.md](./AWS-Architecture/ARCHITECTURE.md)
+
+
+## Task 2: What Was Modified
 
 ### Before — Original Sample App
 
@@ -196,7 +220,7 @@ docker compose down
 
 ---
 
-# TASK 2
+# TASK 3
 ## Reverse Proxy & TLS Implementation
 
 This project implements a secure internal portal using *Nginx as a reverse proxy with TLS termination*, ensuring that all client traffic is encrypted and routed through a single controlled entry point.
