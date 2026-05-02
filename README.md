@@ -80,7 +80,7 @@ The project is based on the [`docker/awesome-compose` nginx-flask-mysql sample](
 ---
 ## Task One: # Architecture
 
-![AWS Design Architecture: Nginx Reverse Proxy Diagram](./AWS-Architecture/aws-architecture.drawio.svg)
+![AWS Design Architecture: Nginx Reverse Proxy Diagram](./AWS-Architecture/aws-architecture.jpg)
 
 ## Architecture Overview
 
